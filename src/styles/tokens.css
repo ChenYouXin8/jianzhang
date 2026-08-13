@@ -1,0 +1,45 @@
+/**
+ * 设计令牌 —— 全应用唯一的颜色 / 圆角 / 阴影来源。
+ *
+ * 色彩语义（产品规范约定）：
+ * - 绿   = 收入 / 储蓄 / 主操作（正向）
+ * - 橙红 = 支出 / 超支（警示）
+ * - 中性灰 = 信息层级
+ *
+ * 所有组件只引用 var(--xxx)，不写死色值；
+ * 深色模式（P1）届时只需在本文件覆盖 :root 取值。
+ * 支出/收入对 #0fa968 / #ed5b2d 已通过 dataviz 色觉安全校验。
+ */
+:root {
+  /* 品牌色 */
+  --color-primary: #0fa968;
+  --color-primary-deep: #0b8551; /* 白底上作正文级数字，对比度 4.6:1 达标 AA */
+  --color-primary-soft: #e6f6ee;
+  --color-expense: #ed5b2d;
+  --color-expense-deep: #c94a22; /* 白底正文级，对比度达标 AA */
+  --color-expense-soft: #fdeee8;
+
+  /* 中性色 */
+  --color-bg: #f7f8fa;
+  --color-card: #ffffff;
+  --color-text: #1f2329;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9aa1ad;
+  --color-border: #eef0f4;
+
+  /* 形状与投影 */
+  --radius-card: 16px;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 8px rgba(16, 24, 40, 0.04);
+
+  /* ---------- Vant 主题覆盖：组件色跟随品牌令牌 ---------- */
+  --van-primary-color: var(--color-primary);
+  --van-danger-color: var(--color-expense);
+  --van-text-color: var(--color-text);
+  --van-text-color-2: var(--color-text-secondary);
+  --van-text-color-3: var(--color-text-tertiary);
+  --van-background: var(--color-bg);
+  --van-background-2: var(--color-card);
+  --van-border-color: var(--color-border);
+  --van-cell-font-size: 15px;
+  --van-radius-md: 12px;
+}

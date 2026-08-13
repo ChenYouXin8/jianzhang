@@ -1,0 +1,105 @@
+/* 全局基础样式：精简 reset + 排版 + 通用工具类 */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans SC', 'MiSans', 'Segoe UI',
+    Roboto, 'Microsoft YaHei', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+input {
+  font: inherit;
+}
+
+/* 数字统一等宽（tabular-nums）：金额列对齐的根基，配合系统字体 */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* 主 Tab 页容器：左右留白 + 底部为 Tabbar 与全面屏安全区留空间 */
+.page {
+  padding: 0 16px calc(64px + env(safe-area-inset-bottom));
+}
+
+/* 卡片 */
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* 触控友好：所有可点击小图标扩大命中区（≥44px 的规范落到具体组件） */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 应用启动加载态 */
+.app-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--color-text-secondary);
+}
+
+/*
+ * 桌面端（宽屏）适配：产品是移动优先的 PWA，桌面浏览器为次要场景。
+ * 宽屏下将整个应用居中限宽为「手机竖屏」形态（480px），
+ * 固定定位的 Tabbar / 弹层 / 数字键盘同步限宽，避免横跨整个显示器。
+ */
+@media (min-width: 600px) {
+  body {
+    background: #e6e8ec;
+  }
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--color-bg);
+    box-shadow: 0 0 32px rgba(16, 24, 40, 0.08);
+  }
+  .van-tabbar,
+  .van-popup--bottom,
+  .van-number-keyboard,
+  .manage-bar {
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    max-width: 480px;
+  }
+}
