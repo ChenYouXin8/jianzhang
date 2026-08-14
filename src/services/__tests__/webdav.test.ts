@@ -108,9 +108,11 @@ describe('webdavPut', () => {
     expect(called[0].headers).toMatchObject({ 'Content-Type': 'application/json' })
   })
 
-  it('409 → 远程目录不存在指引文案', async () => {
+  it('409/404 → 远程目录不存在指引文案', async () => {
     stubFetch(async () => new Response('', { status: 409 }))
-    await expect(webdavPut('https://x.dev/a.json', 'Basic x', '{}')).rejects.toThrow('手动新建')
+    await expect(webdavPut('https://x.dev/a.json', 'Basic x', '{}')).rejects.toThrow('改为 /simple-ledger-sync.json')
+    stubFetch(async () => new Response('', { status: 404 }))
+    await expect(webdavPut('https://x.dev/a.json', 'Basic x', '{}')).rejects.toThrow('改为 /simple-ledger-sync.json')
   })
 })
 

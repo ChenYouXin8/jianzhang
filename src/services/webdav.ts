@@ -109,10 +109,10 @@ export async function webdavPut(url: string, auth: string, body: string): Promis
     body,
   })
   throwOnAuth(res)
-  if (res.status === 409) {
+  if (res.status === 409 || res.status === 404) {
     throw new WebDavError(
-      '远程目录不存在或创建失败：请在坚果云网页版手动新建「简账」文件夹后重试（或修改远程路径）',
-      409,
+      `上传失败（HTTP ${res.status}）：远程目录不存在。请把「远程路径」改为 /simple-ledger-sync.json（文件放网盘根目录，无需建目录），或在坚果云网页版手动新建对应文件夹后重试`,
+      res.status,
     )
   }
   if (!res.ok) throw new WebDavError(`上传失败（HTTP ${res.status}）`, res.status)
