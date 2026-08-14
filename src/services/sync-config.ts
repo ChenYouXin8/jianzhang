@@ -36,8 +36,9 @@ export const DEFAULT_SYNC_CONFIG: SyncConfig = {
   serverUrl: 'https://dav.jianguoyun.com/dav/',
   username: '',
   password: '',
-  // 默认放服务器根目录，避免依赖 MKCOL 建目录（部分代理/服务器不允许该方法）
-  remotePath: '/simple-ledger-sync.json',
+  // 坚果云不允许 WebDAV 根目录直接放文件（ObjectNotFound），
+  // 必须指向已存在的子文件夹：先在坚果云网页版手动新建「简账」文件夹
+  remotePath: '/简账/simple-ledger-sync.json',
 }
 
 export interface SyncStatus {

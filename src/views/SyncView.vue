@@ -297,8 +297,8 @@ async function doForcePull() {
         <ol class="help-list">
           <li>服务器地址填 <code>https://dav.jianguoyun.com/dav/</code>，用户名填坚果云邮箱</li>
           <li>密码不是登录密码：登录网页版坚果云 → 账户信息 → 安全选项 → <b>添加应用密码</b>，生成后填到这里</li>
+          <li>坚果云不允许在 WebDAV 根目录直接放文件：请先在坚果云网页版新建「简账」文件夹，远程路径填 <code>/简账/simple-ledger-sync.json</code>（文件夹名必须一字不差）</li>
           <li>同步文件以 AES-GCM 加密后上传，云端只能看到密文；加密密码请务必牢记，丢失将无法解密</li>
-          <li>若提示 HTTP 409（远程目录不存在）：登录坚果云网页版，在网盘根目录手动新建「简账」文件夹后重试</li>
           <li>免费版坚果云有流量限制（约 1GB 上传 / 3GB 下载每月），正常记账同步足够</li>
         </ol>
         <p class="help-note">
