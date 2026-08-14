@@ -1,0 +1,10 @@
+# Cloudflare Pages 构建配置（BETA 支持，官方文档 2024+）
+# 作用：固定构建命令与输出目录，避免 Cloudflare 框架自动检测误判
+# （本项目是 Vite + Vue，曾被误判为 Next.js 导致执行 npx next build 失败）。
+# 若 dashboard 配置与本文件冲突，以 dashboard 为准；建议两边保持一致。
+name = "jianzhang-czx"
+compatibility_date = "2026-08-14"
+
+[pages]
+build_command = "npm run build"
+build_output_dir = "dist"
