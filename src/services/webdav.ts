@@ -92,12 +92,22 @@ function throwOnAuth(res: Response): void {
   }
 }
 
+/** 非 2xx 时读取响应体前 200 字符（诊断用，如坚果云/代理返回的具体错误） */
+async function responseDetail(res: Response): Promise<string> {
+  try {
+    const text = (await res.text()).trim()
+    return text ? `。服务器返回：${text.slice(0, 200)}` : ''
+  } catch {
+    return ''
+  }
+}
+
 /** GET 文件内容；404 → null（远端文件不存在） */
 export async function webdavGet(url: string, auth: string): Promise<string | null> {
   const res = await request(url, { method: 'GET', headers: { Authorization: auth } })
   throwOnAuth(res)
   if (res.status === 404) return null
-  if (!res.ok) throw new WebDavError(`下载失败（HTTP ${res.status}）`, res.status)
+  if (!res.ok) throw new WebDavError(`下载失败（HTTP ${res.status}）${await responseDetail(res)}`, res.status)
   return res.text()
 }
 
@@ -111,11 +121,11 @@ export async function webdavPut(url: string, auth: string, body: string): Promis
   throwOnAuth(res)
   if (res.status === 409 || res.status === 404) {
     throw new WebDavError(
-      `上传失败（HTTP ${res.status}）：远程目录不存在。请把「远程路径」改为 /simple-ledger-sync.json（文件放网盘根目录，无需建目录），或在坚果云网页版手动新建对应文件夹后重试`,
+      `上传失败（HTTP ${res.status}）：远程目录不存在。请把「远程路径」改为 /simple-ledger-sync.json（文件放网盘根目录，无需建目录），或在坚果云网页版手动新建对应文件夹后重试${await responseDetail(res)}`,
       res.status,
     )
   }
-  if (!res.ok) throw new WebDavError(`上传失败（HTTP ${res.status}）`, res.status)
+  if (!res.ok) throw new WebDavError(`上传失败（HTTP ${res.status}）${await responseDetail(res)}`, res.status)
 }
 
 /** MKCOL 递归建目录：逐级创建；405/409/301 视为已存在继续 */
