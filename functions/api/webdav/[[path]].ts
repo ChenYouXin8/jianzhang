@@ -11,6 +11,10 @@
  *
  * 上游地址默认坚果云，可在 Pages 项目 Settings → Environment variables 里
  * 添加 WEBDAV_UPSTREAM 覆盖（如 Nextcloud 的 https://example.com/remote.php/dav）。
+ *
+ * 注意：只转发必要请求头（Authorization / Content-Type / Depth），避免把浏览器
+ * 的 sec-fetch-* / accept-language 等头带给上游引发兼容问题；任何转发异常返回
+ * 502 + 具体错误信息（而非 Cloudflare 裸 520），便于排查。
  */
 
 interface Env {
@@ -29,17 +33,23 @@ export const onRequest = async (context: ProxyContext): Promise<Response> => {
   const path = url.pathname.replace(/^\/api\/webdav/, '')
   const target = `${upstream}/${path.replace(/^\/+/, '')}`
 
-  const headers = new Headers(context.request.headers)
-  headers.delete('host')
-  headers.delete('origin') // 去掉浏览器 Origin，避免上游服务端做来源校验
+  const headers = new Headers()
+  for (const key of ['Authorization', 'Content-Type', 'Depth'] as const) {
+    const value = context.request.headers.get(key)
+    if (value) headers.set(key, value)
+  }
 
-  const res = await fetch(target, {
-    method: context.request.method,
-    headers,
-    body: ['GET', 'HEAD'].includes(context.request.method) ? undefined : context.request.body,
-    redirect: 'follow',
-  })
-
-  // 透传上游响应（同源请求，无需 CORS 头）
-  return new Response(res.body, { status: res.status, headers: res.headers })
+  try {
+    const res = await fetch(target, {
+      method: context.request.method,
+      headers,
+      body: ['GET', 'HEAD'].includes(context.request.method) ? undefined : context.request.body,
+      redirect: 'follow',
+    })
+    // 透传上游响应（同源请求，无需 CORS 头）
+    return new Response(res.body, { status: res.status, headers: res.headers })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return new Response(`webdav proxy error: ${msg}`, { status: 502 })
+  }
 }
