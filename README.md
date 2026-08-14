@@ -78,7 +78,7 @@ npm run dev        # 启动开发服务器 → http://localhost:5173
 3. 设置「加密密码」：同步文件以 AES-GCM 加密后上传，云端只能看到密文；**该密码务必牢记，丢失将无法解密**
 4. 开启「自动同步」：记账保存后自动上传、应用启动时自动拉取；也可以随时手动「保存并立即同步」
 
-> 通用 WebDAV：也可对接 Nextcloud、自建 WebDAV 等任意标准 WebDAV 服务。若目标服务器不支持浏览器跨域（CORS），可将 `scripts/webdav-proxy.js` 部署为 Cloudflare Worker，把服务器地址填 Worker 地址即可。
+> 通用 WebDAV：也可对接 Nextcloud、自建 WebDAV 等任意标准 WebDAV 服务。若目标服务器拒绝浏览器跨域（CORS，坚果云直连即会如此），把服务器地址改为 `https://你的域名/api/webdav/` —— 本仓库内置 Cloudflare Pages Functions 同源代理（`functions/api/webdav/[[path]].ts`），部署后自动生效，云端转发到 WebDAV 服务器，其余配置不变。
 
 ## ☁️ 部署上线（手机使用）
 
@@ -115,9 +115,11 @@ src/
 ├── utils/             # 工具：money 金额（分） / date 日期 / constants 常量 / crypto 加密 / id
 ├── router/            # 路由（hash 模式，静态部署无需重写规则）
 └── styles/            # 全局样式与设计令牌（tokens / base）
+functions/
+└── api/webdav/[[path]].ts  # Cloudflare Pages Functions：WebDAV 同源代理（解决 CORS）
 scripts/
 ├── gen-icons.mjs      # 生成 PWA 图标
-└── webdav-proxy.js    # Cloudflare Worker 版 WebDAV CORS 代理（可选）
+└── webdav-proxy.js    # 可选：独立 Cloudflare Worker 版 WebDAV CORS 代理
 ```
 
 ## 🔒 数据与隐私

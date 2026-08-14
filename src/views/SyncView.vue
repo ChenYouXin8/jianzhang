@@ -301,8 +301,9 @@ async function doForcePull() {
           <li>免费版坚果云有流量限制（约 1GB 上传 / 3GB 下载每月），正常记账同步足够</li>
         </ol>
         <p class="help-note">
-          通用 WebDAV：也可对接 Nextcloud、自建 WebDAV 等。若服务器不支持浏览器跨域（CORS），
-          可部署 Cloudflare Worker 代理后把服务器地址填 Worker 地址（见项目 scripts/webdav-proxy.js）。
+          通用 WebDAV：也可对接 Nextcloud、自建 WebDAV 等。若服务器拒绝浏览器跨域（CORS，
+          坚果云直连即会如此），把服务器地址改为 <code>https://你的域名/api/webdav/</code>
+          （本仓库内置 Cloudflare Pages 代理，云端转发，无需额外部署），其余照填。
         </p>
       </div>
     </div>
