@@ -126,18 +126,26 @@ export async function performSync(deps: SyncDeps): Promise<SyncReport> {
     const target = buildTarget(cfg)
     const local = await deps.buildLocal()
 
-    // 幂等建目录 + 下载
+    // 幂等建目录 + 下载；MKCOL 失败不阻塞流程，但记录原因供 PUT 409 时提示
     const auth = basicAuthHeader(target.username, target.password)
     const url = buildRemoteUrl(target)
+    let mkcolError: string | null = null
     try {
       await webdavMkcol(dirOf(url), auth)
-    } catch {
-      /* 目录创建失败不阻塞：PUT/GET 会给出更精确的错误 */
+    } catch (err) {
+      mkcolError = err instanceof Error ? err.message : '创建远程目录失败'
     }
     const remoteText = await webdavGet(url, auth)
     if (remoteText === null) {
       // 首次同步：直接上传本地
-      await putEncrypted(target, pass, local)
+      try {
+        await putEncrypted(target, pass, local)
+      } catch (err) {
+        if (mkcolError) {
+          return { kind: 'error', message: `${err instanceof Error ? err.message : '上传失败'}（目录创建失败：${mkcolError}）` }
+        }
+        throw err
+      }
       await updateStatus({ lastMessage: '首次同步：已上传到云端' }, local, local)
       await saveSyncBase(local)
       return { kind: 'pushed', message: '首次同步完成，已上传到云端' }

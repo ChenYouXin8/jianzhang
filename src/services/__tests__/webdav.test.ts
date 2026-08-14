@@ -108,9 +108,9 @@ describe('webdavPut', () => {
     expect(called[0].headers).toMatchObject({ 'Content-Type': 'application/json' })
   })
 
-  it('409 → 父目录不存在文案', async () => {
+  it('409 → 远程目录不存在指引文案', async () => {
     stubFetch(async () => new Response('', { status: 409 }))
-    await expect(webdavPut('https://x.dev/a.json', 'Basic x', '{}')).rejects.toThrow('父目录')
+    await expect(webdavPut('https://x.dev/a.json', 'Basic x', '{}')).rejects.toThrow('手动新建')
   })
 })
 
