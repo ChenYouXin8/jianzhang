@@ -32,6 +32,14 @@ const APP_VERSION = '0.1.0'
 
     <van-cell-group inset title="数据安全">
       <van-cell
+        title="WebDAV 同步"
+        label="对接坚果云等，加密备份到云端"
+        icon="exchange"
+        is-link
+        data-testid="nav-sync"
+        @click="router.push('/sync')"
+      />
+      <van-cell
         title="备份与恢复"
         label="导出 / 导入备份，导出 CSV"
         icon="shield-o"

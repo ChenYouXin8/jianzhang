@@ -17,6 +17,7 @@ const router = createRouter({
     { path: '/accounts', name: 'accounts', component: () => import('@/views/AccountsView.vue') },
     { path: '/categories', name: 'categories', component: () => import('@/views/CategoriesView.vue') },
     { path: '/backup', name: 'backup', component: () => import('@/views/BackupView.vue') },
+    { path: '/sync', name: 'sync', component: () => import('@/views/SyncView.vue') },
   ],
 })
 

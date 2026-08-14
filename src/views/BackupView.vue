@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { db } from '@/db/database'
 import { replaceAllSettings } from '@/db/repositories/settings'
 import { createBackupFile, downloadTextFile, parseBackupFile, transactionsToCSV } from '@/services/export'
+import { filterSensitiveSettings } from '@/services/sync-config'
 import { useLedgerStore } from '@/stores/ledger'
 import { lastMonths, monthLabel } from '@/utils/date'
 
@@ -25,9 +26,10 @@ function exportBackup() {
     budgets: ledger.budgets,
     settings: [], // settings 由下方补充读取
   })
-  // settings 表不在 store 内，直接从仓储读取补全
+  // settings 表不在 store 内，直接从仓储读取补全；
+  // 排除 sync.* 敏感键（WebDAV 密码 / 加密密码 / 同步状态），避免随备份文件外泄
   db.settings.toArray().then((settings) => {
-    const full = { ...file, settings }
+    const full = { ...file, settings: filterSensitiveSettings(settings) }
     const date = new Date().toISOString().slice(0, 10)
     downloadTextFile(`简账-备份-${date}.json`, JSON.stringify(full, null, 2), 'application/json')
     showSuccessToast('备份已导出')
