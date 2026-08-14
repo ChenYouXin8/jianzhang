@@ -142,7 +142,10 @@ export async function performSync(deps: SyncDeps): Promise<SyncReport> {
         await putEncrypted(target, pass, local)
       } catch (err) {
         if (mkcolError) {
-          return { kind: 'error', message: `${err instanceof Error ? err.message : '上传失败'}（目录创建失败：${mkcolError}）` }
+          return {
+            kind: 'error',
+            message: `上传失败：${err instanceof Error ? err.message : '未知错误'}。自动建目录被服务器拒绝（${mkcolError}），请把「远程路径」改为 /simple-ledger-sync.json（文件放网盘根目录，无需建目录），或在坚果云网页版手动新建「简账」文件夹后重试`,
+          }
         }
         throw err
       }
