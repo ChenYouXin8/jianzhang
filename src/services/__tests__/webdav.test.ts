@@ -110,9 +110,9 @@ describe('webdavPut', () => {
 
   it('409/404 → 远程目录不存在指引文案', async () => {
     stubFetch(async () => new Response('', { status: 409 }))
-    await expect(webdavPut('https://x.dev/a.json', 'Basic x', '{}')).rejects.toThrow('改为 /simple-ledger-sync.json')
+    await expect(webdavPut('https://x.dev/a.json', 'Basic x', '{}')).rejects.toThrow('手动新建「简账」文件夹')
     stubFetch(async () => new Response('', { status: 404 }))
-    await expect(webdavPut('https://x.dev/a.json', 'Basic x', '{}')).rejects.toThrow('改为 /simple-ledger-sync.json')
+    await expect(webdavPut('https://x.dev/a.json', 'Basic x', '{}')).rejects.toThrow('手动新建「简账」文件夹')
   })
 })
 
