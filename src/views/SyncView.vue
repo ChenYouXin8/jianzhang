@@ -239,7 +239,7 @@ async function doForcePull() {
         <van-field
           v-model="form.remotePath"
           label="远程路径"
-          placeholder="/简账/simple-ledger-sync.json"
+          placeholder="/simple-ledger-sync.json"
           clearable
           data-testid="sync-remote-path"
         />

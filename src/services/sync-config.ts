@@ -36,7 +36,8 @@ export const DEFAULT_SYNC_CONFIG: SyncConfig = {
   serverUrl: 'https://dav.jianguoyun.com/dav/',
   username: '',
   password: '',
-  remotePath: '/简账/simple-ledger-sync.json',
+  // 默认放服务器根目录，避免依赖 MKCOL 建目录（部分代理/服务器不允许该方法）
+  remotePath: '/simple-ledger-sync.json',
 }
 
 export interface SyncStatus {

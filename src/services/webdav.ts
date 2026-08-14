@@ -143,22 +143,29 @@ export async function webdavPropfind(url: string, auth: string): Promise<number>
   return res.status
 }
 
-/** 测试连接：确保父目录存在（幂等）后探测文件；任何错误转为可展示文案 */
+/** 测试连接：GET 探测远程文件（404=文件不存在，200=存在，401=认证失败） */
 export async function testConnection(
   target: WebDavTarget,
 ): Promise<{ ok: boolean; message: string; remoteExists: boolean }> {
   try {
     const url = buildRemoteUrl(target)
     const auth = basicAuthHeader(target.username, target.password)
-    await webdavMkcol(dirOf(url), auth)
-    const status = await webdavPropfind(url, auth)
-    const exists = status === 207 || status === 200
+    // 不用 PROPFIND：阿里云 FC 等代理中间层可能只放行标准方法（PROPFIND 会被拒）
+    const text = await webdavGet(url, auth)
+    const exists = text !== null
     return {
       ok: true,
       message: exists ? '连接成功，远程文件已存在' : '连接成功，远程文件尚不存在',
       remoteExists: exists,
     }
   } catch (err) {
+    if (err instanceof WebDavError && err.status === 401) {
+      return {
+        ok: false,
+        message: '认证失败：请检查用户名 / 密码（坚果云请使用应用密码）',
+        remoteExists: false,
+      }
+    }
     return {
       ok: false,
       message: err instanceof WebDavError ? err.message : '连接失败',

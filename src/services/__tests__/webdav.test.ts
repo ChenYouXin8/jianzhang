@@ -139,18 +139,16 @@ describe('testConnection', () => {
     remotePath: '/简账/simple-ledger-sync.json',
   }
 
-  it('文件存在（PROPFIND 207）→ 连接成功且已存在', async () => {
-    stubFetch(async () => new Response('', { status: 207 }))
+  it('文件存在（GET 200）→ 连接成功且已存在', async () => {
+    stubFetch(async () => new Response('{}', { status: 200 }))
     const r = await testConnection(target)
     expect(r.ok).toBe(true)
     expect(r.message).toContain('已存在')
     expect(r.remoteExists).toBe(true)
   })
 
-  it('文件不存在（404）→ 连接成功但文件未建', async () => {
-    stubFetch(async (_url, init) =>
-      init?.method === 'MKCOL' ? new Response('', { status: 201 }) : new Response('', { status: 404 }),
-    )
+  it('文件不存在（GET 404）→ 连接成功但文件未建', async () => {
+    stubFetch(async () => new Response('', { status: 404 }))
     const r = await testConnection(target)
     expect(r.ok).toBe(true)
     expect(r.remoteExists).toBe(false)
