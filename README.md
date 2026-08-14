@@ -1,6 +1,6 @@
 # 简账 · 个人记账
 
-> 本地优先、离线可用的个人记账 PWA。**打开即记**，数据默认只保存在你自己的设备上，不上传任何服务器；可选 WebDAV 同步（坚果云等），加密备份到云端。
+> 本地优先、离线可用的个人记账 PWA。**打开即记**，数据默认只保存在你自己的设备上，不上传任何服务器；可选 WebDAV 同步（坚果云等），AES-GCM 加密备份到云端，多设备互通。
 
 ---
 
@@ -12,7 +12,7 @@
 - **统计图表**：月度收支总览、近 6 月趋势、支出 / 收入构成环形图与分类排行（ECharts）
 - **预算管理**：按月 + 一级分类设置预算，超额提醒
 - **账单管理**：按日分组列表、月份切换、搜索筛选（类型 / 分类 / 账户 / 时间范围）、批量删除、CSV 导出（Excel 可直接打开）
-- **WebDAV 同步**：通用 WebDAV 配置（坚果云 / Nextcloud / 自建），文件 **AES-GCM 加密**上传，**三路合并**保证多设备同步不丢数据，支持手动 / 记账后自动同步
+- **WebDAV 同步**：对接坚果云 / Nextcloud / 自建 WebDAV，文件 **AES-GCM 加密**上传，**三路合并**保证多设备同步不丢数据，支持手动 / 记账后自动同步
 - **备份恢复**：JSON 全量备份（含格式校验），换设备可完整迁移
 - **PWA 离线可用**：可添加到手机主屏，全屏运行，像原生 App 一样
 
@@ -71,25 +71,62 @@ npm run dev        # 启动开发服务器 → http://localhost:5173
 | 备份恢复 | 我的 → 备份恢复 | JSON 导出 / 导入、CSV 导出（全部 / 按月）、清除全部数据 |
 | WebDAV 同步 | 我的 → WebDAV 同步 | 服务器配置、加密密码、自动同步开关、测试连接、强制上传 / 下载 |
 
-### WebDAV 同步（以坚果云为例）
+### WebDAV 同步（以坚果云为例，完整教程）
 
-1. 进入「我的 → WebDAV 同步」，服务器地址填 `https://dav.jianguoyun.com/dav/`，用户名填坚果云邮箱
-2. **密码填「应用密码」**：登录坚果云网页版 → 账户信息 → 安全选项 → 添加应用密码（不是登录密码）
-3. 设置「加密密码」：同步文件以 AES-GCM 加密后上传，云端只能看到密文；**该密码务必牢记，丢失将无法解密**
-4. 开启「自动同步」：记账保存后自动上传、应用启动时自动拉取；也可以随时手动「保存并立即同步」
+同步链路：`浏览器 → 阿里云函数计算（FC）代理 → 坚果云`。
+坚果云不支持浏览器直连（无 CORS 头），且 Cloudflare 海外边缘访问国内坚果云会被网络层拦截（HTTP 520），因此需要把代理部署在**国内**（阿里云 FC 免费额度足够）。
 
-> 通用 WebDAV：也可对接 Nextcloud、自建 WebDAV 等任意标准 WebDAV 服务。若目标服务器拒绝浏览器跨域（CORS，坚果云直连即会如此），把服务器地址改为 `https://你的域名/api/webdav/` —— 本仓库内置 Cloudflare Pages Functions 同源代理（`functions/api/webdav/[[path]].ts`），部署后自动生效，云端转发到 WebDAV 服务器，其余配置不变。
+**① 部署代理（一次性，约 5 分钟）**
+
+代码在 [`scripts/fc-proxy/index.js`](scripts/fc-proxy/index.js)（可直接上传的打包文件为 [`scripts/fc-proxy.zip`](scripts/fc-proxy.zip)）：
+
+1. 阿里云 → 函数计算 FC → 创建函数 → 类型选「**Web 函数**」→ 运行时 **Node.js 20**
+2. 代码上传方式选「通过 ZIP 包上传代码」，上传 `scripts/fc-proxy.zip`
+3. 启动命令 `node index.js`，监听端口 `9000`（默认即可），创建
+4. 函数详情 → 触发器 → 创建 HTTP 触发器 → 认证选「**无需认证**」
+5. 得到公网地址：`https://<函数名>-<uid>-<region>.fcapp.run`（免备案）
+
+> 若需对接其他 WebDAV 服务，可给函数添加环境变量 `WEBDAV_UPSTREAM` 覆盖上游地址（默认坚果云）。
+
+**② 准备坚果云（一次性）**
+
+1. 登录 [坚果云网页版](https://www.jianguoyun.com) → 账户信息 → 安全选项 → **添加应用密码**（记下，不是登录密码）
+2. 在网盘根目录**手动新建文件夹「简账」**（坚果云不允许 WebDAV 根目录直接放文件，且不允许程序自动建目录，必须手动建）
+
+**③ 配置简账**
+
+打开「我的 → WebDAV 同步」，填写：
+
+| 配置项 | 值 |
+| --- | --- |
+| 服务器地址 | `https://<函数名>-<uid>-<region>.fcapp.run/api/webdav/`（FC 地址 + `/api/webdav/`） |
+| 用户名 | 坚果云邮箱 |
+| 密码 | 坚果云**应用密码**（不是登录密码） |
+| 远程路径 | `/简账/simple-ledger-sync.json`（文件夹名必须与坚果云里的一字不差） |
+| 加密密码 | 自行设置，用于加密云端文件；**务必牢记，丢失无法解密** |
+| 自动同步 | 建议开启：记账保存后自动上传、应用启动时自动拉取 |
+
+点「保存并立即同步」→ 显示「首次同步完成，已上传到云端」即成功。换设备/换域名后重新配置一次，数据自动拉回。
+
+> 通用 WebDAV：也可对接 Nextcloud、自建 WebDAV 等任意标准 WebDAV 服务（无 CORS 问题的服务器可直接填其地址）。若服务器支持 MKCOL/PROPFIND，程序可自动建目录；坚果云 + 阿里云 FC 场景下需手动建文件夹。
 
 ## ☁️ 部署上线（手机使用）
 
-项目是纯静态 PWA，构建产物 `dist/` 可部署到任意静态托管，无需服务器与数据库：
+项目是纯静态 PWA，构建产物 `dist/` 可部署到任意静态托管。两种方式：
 
-1. 双击 **`部署.bat`** 构建生产包（会自动打开上传页与 dist 文件夹）
-2. 打开 [Cloudflare Pages](https://dash.cloudflare.com) → Create → Pages → **Upload assets**，把 `dist` 文件夹整个拖进去
-3. 十几秒后得到 `https://xxx.pages.dev` 网址，手机浏览器打开
-4. 安装到主屏幕：iPhone（Safari）→ 分享 → **添加到主屏幕**；Android（Chrome）→ ⋮ → **安装应用**
+**方式 A：Cloudflare Pages + GitHub 自动部署（推荐）**
 
-详见 [部署说明.md](部署说明.md)。
+1. 把仓库推送到 GitHub，Cloudflare Pages → Create → **Connect to Git** 连接仓库
+2. 构建配置（仓库内 [`wrangler.toml`](wrangler.toml) 已固定）：Build command `npm run build`，输出目录 `dist`；`.nvmrc` 指定 Node 22
+3. 之后每次 `git push` 自动构建上线
+
+**方式 B：直接上传（Upload assets）**
+
+1. 双击 **`部署.bat`** 构建生产包
+2. Cloudflare Pages → Create → Pages → Upload assets，把 `dist` 文件夹拖进去
+3. 得到 `https://xxx.pages.dev` 网址；更新时重新构建再拖一次
+
+手机安装到主屏幕：iPhone（Safari）→ 分享 → **添加到主屏幕**；Android（Chrome）→ ⋮ → **安装应用**。详见 [部署说明.md](部署说明.md)。
 
 ## 🧪 测试
 
@@ -100,7 +137,7 @@ npm run lint        # ESLint
 npm run typecheck   # TypeScript 类型检查
 ```
 
-单元测试覆盖：金额 / 余额 / 预算 / 统计 / 导出 / WebDAV 客户端 / 三路合并 / 加密解密 / 同步编排。
+单元测试覆盖：金额 / 余额 / 预算 / 统计 / 导出 / WebDAV 客户端 / 三路合并 / 加密解密 / 同步编排（105 个用例）。
 
 ## 📁 项目结构
 
@@ -116,21 +153,23 @@ src/
 ├── router/            # 路由（hash 模式，静态部署无需重写规则）
 └── styles/            # 全局样式与设计令牌（tokens / base）
 functions/
-└── api/webdav/[[path]].ts  # Cloudflare Pages Functions：WebDAV 同源代理（解决 CORS）
+└── api/webdav/[[path]].ts  # Cloudflare Pages Functions：WebDAV 同源代理（海外 WebDAV 场景可用）
 scripts/
-├── gen-icons.mjs      # 生成 PWA 图标
-└── webdav-proxy.js    # 可选：独立 Cloudflare Worker 版 WebDAV CORS 代理
+├── gen-icons.mjs          # 生成 PWA 图标
+├── fc-proxy/index.js      # 阿里云 FC 版 WebDAV 代理（国内访问坚果云的推荐方案）
+├── fc-proxy.zip           # 上述代码的打包文件（直接上传阿里云 FC）
+└── webdav-proxy.js        # 可选：独立 Cloudflare Worker 版 WebDAV CORS 代理
 ```
 
 ## 🔒 数据与隐私
 
 - **默认纯本地**：所有数据仅存储在**当前设备浏览器**（IndexedDB），离线可用，不上传任何服务器
 - **加密同步**：开启 WebDAV 同步后，账本以 AES-GCM 加密文件上传到你自己的 WebDAV 空间，云端只能看到密文；WebDAV 密码与加密密码仅存本机，导出备份文件时不包含
-- **迁移**：换设备可导出备份 JSON 导入，或在新设备配置同一 WebDAV 自动拉取
+- **迁移**：换设备可导出备份 JSON 导入，或在新设备配置同一 WebDAV 自动拉取（换域名同理，重新配置一次即可）
 - **注意**：删除浏览器站点数据会清空账本，删除前请先导出备份或完成同步
 
 ## ⚠️ 注意事项
 
 - 桌面端为 Vant 触摸组件（数字键盘、日期选择器）做了鼠标兼容层，可拖拽 / 滚轮 / 点击操作
 - 记账日期上限 2099-12-31，允许预记未来日期
-- 坚果云免费版有流量限制（约 1GB 上传 / 3GB 下载每月），正常记账同步足够
+- 坚果云限制：WebDAV 根目录不能直接放文件（ObjectNotFound），文件夹需在网页版手动创建；免费版有流量限制（约 1GB 上传 / 3GB 下载每月），正常记账同步足够
